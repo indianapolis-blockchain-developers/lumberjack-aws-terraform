@@ -1,0 +1,10 @@
+---
+- name: Indy-Pool K8s Host Build
+  hosts: all
+  gather_facts: true
+
+  tasks:
+
+  - name: Perform system update
+    yum: name=* state=latest
+    become: true
