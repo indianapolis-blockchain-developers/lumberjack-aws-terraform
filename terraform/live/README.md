@@ -15,17 +15,17 @@ Creates an Kubernetes (K8s) Cluster in Amazon Virtual Private Cloud (VPC) in a s
 
 ## Details
 
-* Two subnets, one public and one private
-* Single EC2 instance as bastion host in public subnet
-* Single EC2 instance as master node in private subnet
-* The master node is an auto-recoving EC2 instance
-* Two EC2 instances as K8s nodes in private subnet
-* 1-10 EC2 instances available for K8s node Auto Scaling group
-* Single ELB Load Balancer for HTTPS Kubernetes API access
-* kubeadm for bootstraping K8s on Linux
-* Docker for container runtime
-* Calico for pod networking
-* CoreDNS for cluster DNS
-* Port 22 SSH access to bastion host
-* Port 6443 for HTTPS access for K8s API
-* CentOS 7 for EC2 instances
+* Two subnets, one public and one private (Completed)
+* Single EC2 instance as bastion host in public subnet (Completed)
+* Single EC2 instance as master node in private subnet (In-progress)
+* The master node is an auto-recoving EC2 instance (Not Started)
+* Three EC2 instances as K8s nodes in private subnet (In-progress)
+* 1-10 EC2 instances available for K8s node Auto Scaling group (Not Started)
+* Single ELB Load Balancer for HTTPS Kubernetes API access (In-progress)
+* kubeadm for bootstraping K8s on Linux (Not Started)
+* Docker for container runtime (completed)
+* Calico for pod networking (Not Started)
+* CoreDNS for cluster DNS (Not Started)
+* Port 22 SSH access to bastion host (Completed)
+* Port 6443 for HTTPS access for K8s API (Not Started)
+* CentOS 7 for EC2 instances (Completed)
