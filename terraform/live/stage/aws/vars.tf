@@ -36,9 +36,13 @@ variable "aws_region" {
 variable "InstanceType" {
     type                 = "string"
     description          = "The type of EC2 Instances to run (e.g. t2.micro)"
-    default              = "t2.micro"
+    default              = "t3.small"
 }       
-       
+
+variable "packer-ami" {
+    default              = "ami-0adfbe9a4906941a4"
+}
+
 variable "amis"        {
     type                 = "map"
     default              = {
@@ -67,4 +71,5 @@ variable "bastion_public_key" {
 
 variable "cluster_id" {
   default = "rke"
+  type    = "string"
 }

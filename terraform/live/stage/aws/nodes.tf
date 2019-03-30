@@ -1,9 +1,7 @@
-
-
 resource "aws_instance" "bastion" {
-    ami                                 = "${lookup(var.amis, var.aws_region)}"
+    ami                                 = "${var.packer-ami}"
     key_name                            = "${aws_key_pair.bastion_key.key_name}"
-    instance_type                       = "${var.InstanceType}"
+    instance_type                       = "t3.micro"
     vpc_security_group_ids              = ["${aws_security_group.bastion-sg.id}"]
     private_ip                          = "10.0.128.5"
     associate_public_ip_address         = true
@@ -22,20 +20,8 @@ resource "aws_instance" "bastion" {
     
     provisioner "remote-exec" {
         inline = [
-            "sudo yum -y update",
-            "sudo yum -y install epel-release",
-            "sudo yum -y install ansible",
-            "sudo yum -y install python-boto",
-            "sudo yum -y install vim",
-            "sudo yum -y install git",
-            "git init",
-            "git clone https://github.com/injectedfusion/lumberjack-ansible",
-            "chmod +x /home/centos/lumberjack-ansible/module_utils/ec2.py",
-            "cd /etc/ansible/roles",
-            "sudo git clone https://github.com/geerlingguy/ansible-role-docker",
-            "sudo mv -f /home/centos/lumberjack-ansible/ansible.cfg /etc/ansible/ansible.cfg",  
             "sudo chown centos /home/centos/.ssh/rke_private.pem",
-            "sudo chmod 400 /home/centos/.ssh/rke_private.pem"      
+            "sudo chmod 400 /home/centos/.ssh/rke_private.pem"   
         ]     
     }
 
@@ -52,8 +38,8 @@ resource "aws_instance" "bastion" {
      
 resource "aws_instance" "rke-node" {
   count = 4
-  ami                    = "${lookup(var.amis, var.aws_region)}"
-  instance_type          = "${var.InstanceType}"
+  ami                    = "ami-02eac2c0129f6376b"
+  instance_type          = "t2.small"
   key_name               = "${aws_key_pair.rke-node-key.id}"
   iam_instance_profile   = "${aws_iam_instance_profile.rke-aws.name}"
   vpc_security_group_ids = ["${aws_security_group.private_sg.id}"]
@@ -61,12 +47,33 @@ resource "aws_instance" "rke-node" {
 
   root_block_device {
       delete_on_termination = true
-  }  
-  tags {
-      Name = "rke-${count.index}"
-      role = "k8s-cluster"
-    }
-
-
+  }
+  tags                       = "${
+        map(
+            "Name", "rke-${count.index}",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned",
+            "role", "k8s-cluster"
+        )
+    }"
+  provisioner "remote-exec" {
+    connection {
+            bastion_host        = "${aws_instance.bastion.public_ip}"
+            bastion_user        = "centos"
+            bastion_private_key = "${file("~/.ssh/bastion_key.pem")}"
+            type                = "ssh"
+            user                = "centos"
+            private_key         = "${tls_private_key.node-key.private_key_pem}"
+        }
+    
+    inline = [
+      "sudo yum update -y openssh",
+      "curl releases.rancher.com/install-docker/18.09.2.sh| bash",
+      "sudo usermod -aG docker centos",
+      "sudo systemctl start docker",
+      "sudo systemctl status docker",
+      "sudo systemctl enable docker"
+    ]
+  }
 }
+
 

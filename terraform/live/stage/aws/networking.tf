@@ -3,10 +3,12 @@ resource "aws_vpc" "lumberjack" {
     cidr_block                 = "${var.VPCCIDR}"
     enable_dns_support         = true
     enable_dns_hostnames       = true   
-    tags                       = {
-        Name                   = "Lumberjack VPC"
-        resource-group         = "${var.resource_group}"
-    }
+    tags                       = "${
+        map(
+            "Name", "Lumberjack VPC",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned"
+        )
+    }"
 }
 
 # This is the Public Subnet
@@ -15,10 +17,12 @@ resource "aws_subnet" "public" {
     vpc_id                     = "${aws_vpc.lumberjack.id}"
     cidr_block                 = "${var.PublicSubnetCIDR}"
     availability_zone          = "${var.availability_zone}"
-      
-    tags {      
-        Name                   = "Public Subnet"
-    }
+    tags                       = "${
+        map(
+            "Name", "Public Subnet",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned"
+        )
+    }"
 }
 
 # This is the Private Subnet
@@ -26,20 +30,25 @@ resource "aws_subnet" "private" {
     vpc_id                     = "${aws_vpc.lumberjack.id}"
     cidr_block                 = "${var.PrivateSubnetCIDR}"
     availability_zone          = "${var.availability_zone}"
-      
-    tags {      
-        Name                   = "Private Subnet"
-    }
+    tags                       = "${
+        map(
+            "Name", "Private Subnet",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned"
+        )
+    }"
 }    
 
 # The DHCP options set overrides the AWS/EC2 options
 resource "aws_vpc_dhcp_options" "dns_resolver" {
     domain_name_servers        = ["1.1.1.1", "8.8.8.8"]
     domain_name                = "ec2.internal"
-    tags {       
-        Name                   = "ec2.internal"
-        resource-group         = "${var.resource_group}"
-    }   
+    tags                       = "${
+        map(
+            "Name", "Lumberjack VPC",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned",
+            "resource-group", "${var.resource_group}"
+        )
+    }"  
 }
 
 # Defines the security group for the public subnet
@@ -59,6 +68,12 @@ resource "aws_security_group" "bastion-sg" {
         to_port                = 0
         cidr_blocks            = ["0.0.0.0/0"]
     }
+    tags                       = "${
+        map(
+            "Name", "Bastion Security Group ",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned"
+        )
+    }"
 }
 
 # Defines the security group for the private subnet
@@ -72,7 +87,15 @@ resource "aws_security_group" "private_sg" {
         to_port                = 22
         protocol               = "tcp"
         cidr_blocks            = ["${var.PublicSubnetCIDR}"]
-    }           
+    }
+
+    ingress {
+        from_port              = 6443
+        to_port                = 6443
+        protocol               = "tcp"
+        cidr_blocks            = ["${var.PublicSubnetCIDR}"]
+    }
+    
           
     ingress {           
         from_port              = -1
@@ -89,15 +112,25 @@ resource "aws_security_group" "private_sg" {
     }           
           
     vpc_id                     = "${aws_vpc.lumberjack.id}"
+    tags                       = "${
+        map(
+            "Name", "Private Security Group ",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned"
+        )
+    }"
 }     
 
 # The internet gateway connects the public subnet to the internet
 resource "aws_internet_gateway" "igw" {
   vpc_id                       = "${aws_vpc.lumberjack.id}"
-  tags {      
-    Environment                = "${var.environment_tag}"
-    resource-group             = "${var.resource_group}"
-  }
+  tags                       = "${
+        map(
+            "Name", "Lumberjack VPC",
+            "kubernetes.io/cluster/${var.cluster_id}", "owned",
+            "Environment", "${var.environment_tag}",
+            "resource-group", "${var.resource_group}"
+        )
+    }"
 }
 
 
